@@ -62,7 +62,7 @@ class AiTalk {
       final response = await http.post(
         url,
         body: json.encode({'messages':[{'role': 'user', 'content': data}],
-          'password':'bzl','key':'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',
+          'password':'bzl','key':'',
           'temperature':0.6}),
         headers: {'Content-Type': 'application/json'},
       );
