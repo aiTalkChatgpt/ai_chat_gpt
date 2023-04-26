@@ -76,8 +76,7 @@ class AiTalk {
           messages.add({"role": "user", "content": element["content"]});
         }else {
           messages.add({"role": "assistant",
-            "content": element["content"],
-          "path":"v1/chat/completions"});
+            "content": element["content"]});
         }
       }
     }
@@ -88,13 +87,14 @@ class AiTalk {
         url,
         body: json.encode({
           'messages': messages,
-          'password': 'bzl',
           "model": "gpt-3.5-turbo",
           'temperature': 0.6,
           'max_tokens':2000,
-          'presence_penalty':0
+          'presence_penalty':0,
+          "stream":true,
         }),
-        headers: {'Content-Type': 'application/json','access-code':"stxxf.789"},
+        headers: {'Content-Type': 'application/json'
+          ,'access-code':"stxxf.789","path":"v1/chat/completions"},
       );
       callSpeak(response.body);
       DatabaseUtil.db.insert("Chat", {"content": response.body, "type": 1});
