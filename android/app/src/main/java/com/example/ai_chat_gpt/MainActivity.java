@@ -56,6 +56,7 @@ public class MainActivity extends FlutterActivity {
                     @Override
                     public void onMethodCall(MethodCall call, MethodChannel.Result result) {
                         if (call.method.equals("openListening")) {
+                            flag = true;
                             mResult = result;
                             mIat.startListening(mRecognizerListener);
                         } else {
