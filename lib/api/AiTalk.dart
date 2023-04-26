@@ -7,34 +7,33 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 
 class AiTalk {
-  final MethodChannel _listenChannel = const MethodChannel('my_app/listenChannel');
-  final MethodChannel _speakChannel = const MethodChannel('my_app/speakChannel');
+  final MethodChannel _listenChannel =
+      const MethodChannel('my_app/listenChannel');
+  final MethodChannel _speakChannel =
+      const MethodChannel('my_app/speakChannel');
   final MethodChannel _stopChannel = const MethodChannel('my_app/stopChannel');
 
   bool _isListening = false;
   bool canListen = true;
 
-  Future<List<dynamic>>  callListen() async {
+  Future<void> callListen() async {
     try {
-      if(_isListening){
-        return [];
+      if (_isListening) {
+        return ;
       }
       canListen = true;
       _isListening = true;
-      String result = await _listenChannel.invokeMethod('openListening', {"arg": "my_argument"});
-      if(result.trim().isNotEmpty){
-        DatabaseUtil.db.insert("Chat", {"content": result, "type": 0});
+      String result = await _listenChannel
+          .invokeMethod('openListening', {"arg": "my_argument"});
+      if (result.trim().isNotEmpty) {
+        _requestOpenAi(result);
         // 处理成功结果
-        return [{"content": result, "type": 0}, {"content": _requestOpenAi(result), "type": 0}];
-      } else {
         _isListening = false;
         callListen();
-        return [];
       }
-
     } on PlatformException catch (e) {
       // 处理异常
-      return [];
+      return ;
     }
   }
 
@@ -53,7 +52,7 @@ class AiTalk {
     try {
       await _speakChannel.invokeMethod('openSpeak', {"arg": text});
       _isListening = false;
-      if(!text.contains("关闭") && canListen){
+      if (!text.contains("关闭") && canListen) {
         callListen();
       }
       return text;
@@ -64,24 +63,44 @@ class AiTalk {
     }
   }
 
-  Future<String> _requestOpenAi(String data) async {
-    final url = Uri.parse("https://chat-bzl.maybee.shop/api");
+  Future<void> _requestOpenAi(String data) async {
+    final url = Uri.parse("https://chat-gpt-next-web5-puce.vercel.app/api/chat-stream");
+    List<Map<String, dynamic>> list = await DatabaseUtil.db.queryAllRows("Chat");
+    List messages = [];
+    if(list.length > 10) {
+      list = list.sublist(0, 10);
+    }
+    if(list.isNotEmpty){
+      for (var element in list) {
+        if(element["type"] == 0){
+          messages.add({"role": "user", "content": element["content"]});
+        }else {
+          messages.add({"role": "assistant",
+            "content": element["content"],
+          "path":"v1/chat/completions"});
+        }
+      }
+    }
+    messages.add({"role": "user", "content": data});
+    DatabaseUtil.db.insert("Chat", {"content": data, "type": 0});
     try {
       final response = await http.post(
         url,
-        body: json.encode({'messages':[{'role': 'user', 'content': data}],
-          'password':'bzl','key':'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'
-          ,"model":"gpt-3.5-turbo",
-          'temperature':0.6}),
-        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'messages': messages,
+          'password': 'bzl',
+          "model": "gpt-3.5-turbo",
+          'temperature': 0.6,
+          'max_tokens':2000,
+          'presence_penalty':0
+        }),
+        headers: {'Content-Type': 'application/json','access-code':"stxxf.789"},
       );
       callSpeak(response.body);
       DatabaseUtil.db.insert("Chat", {"content": response.body, "type": 1});
-      return response.body;
     } catch (error) {
       print('Error: $error');
       DatabaseUtil.db.insert("Chat", {"content": 'error', "type": 1});
-      return 'error';
     }
   }
 }
