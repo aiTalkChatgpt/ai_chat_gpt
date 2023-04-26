@@ -22,15 +22,16 @@ class AiTalk {
       canListen = true;
       _isListening = true;
       String result = await _listenChannel.invokeMethod('openListening', {"arg": "my_argument"});
-      if(result.trim().isEmpty){
+      if(result.trim().isNotEmpty){
+        DatabaseUtil.db.insert("Chat", {"content": result, "type": 0});
+        // 处理成功结果
+        return [{"content": result, "type": 0}, {"content": _requestOpenAi(result), "type": 0}];
+      } else {
         _isListening = false;
-        await callStop();
-        await callListen();
+        callListen();
         return [];
       }
-      DatabaseUtil.db.insert("Chat", {"content": result, "type": 0});
-      // 处理成功结果
-      return [{"content": result, "type": 0}, {"content": _requestOpenAi(result), "type": 0}];
+
     } on PlatformException catch (e) {
       // 处理异常
       return [];
@@ -39,9 +40,10 @@ class AiTalk {
 
   Future<void> callStop() async {
     try {
+      canListen = false;
+      _isListening = false;
       await _stopChannel.invokeMethod('stop', {"arg": "my_argument"});
       // 处理成功结果
-      canListen = false;
     } on PlatformException catch (e) {
       print(e.message);
     }
@@ -68,7 +70,8 @@ class AiTalk {
       final response = await http.post(
         url,
         body: json.encode({'messages':[{'role': 'user', 'content': data}],
-          'password':'bzl','key':'',"model":"gpt-3.5-turbo",
+          'password':'bzl','key':'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'
+          ,"model":"gpt-3.5-turbo",
           'temperature':0.6}),
         headers: {'Content-Type': 'application/json'},
       );
