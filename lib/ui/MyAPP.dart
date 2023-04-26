@@ -4,6 +4,7 @@
 import 'dart:async';
 
 import 'package:ai_chat_gpt/api/AiTalk.dart';
+import 'package:ai_chat_gpt/ui/ChatBubble.dart';
 import 'package:ai_chat_gpt/utils/data_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,17 +43,18 @@ class _MyAppState extends State<MyHomePage> {
         items = value;
       })
     });
-    _streamSubscription = DatabaseUtil.db.databaseChangeStream.listen((bool isChanged) {
-      if (isChanged) {
-        setState(() {
-          DatabaseUtil.db.queryAllRows("chat").then((value) => {
+    _streamSubscription =
+        DatabaseUtil.db.databaseChangeStream.listen((bool isChanged) {
+          if (isChanged) {
             setState(() {
-              items = value;
-            })
-          });
+              DatabaseUtil.db.queryAllRows("chat").then((value) => {
+                setState(() {
+                  items = value;
+                })
+              });
+            });
+          }
         });
-      }
-    });
   }
 
   void _callListen() async {
@@ -80,32 +82,38 @@ class _MyAppState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Speech to Text Demo'),
+        title: const Text('AI 聊天机器人'),
       ),
       body: Column(
         children: [
-          SizedBox(
+          Expanded(
               child: ListView.builder(
                 itemCount: items.length,
                 itemBuilder: (BuildContext context, int index) {
                   final item = items[index];
                   switch (item["type"]) {
                     case 0:
-                      return ListTile(
-                        title: Text(item["content"]),
-                        tileColor: Colors.green,
+                      return ChatBubble(
+                          message: item["content"],
+                          margin: const EdgeInsets.fromLTRB(10, 10, 0, 10),
+                          width: 0.7,
+                          alignment: Alignment.centerLeft,
+                          isSentByMe: true
                       );
                     case 1:
-                      return ListTile(
-                        title: Text(item["content"]),
-                        tileColor: Colors.red,
+                      return ChatBubble(
+                          message: item["content"],
+                          backgroundColor: Colors.amberAccent,
+                          margin: const EdgeInsets.fromLTRB(0, 10, 10, 10),
+                          width: 0.7,
+                          alignment: Alignment.centerRight,
+                          isSentByMe: false
                       );
                     default:
                       return Container();
                   }
                 },
-              ),
-              height: 500),
+              )),
           Container(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -121,7 +129,7 @@ class _MyAppState extends State<MyHomePage> {
                 ),
               ],
             ),
-            height: 80,
+            height: 60,
           )
         ],
       ),

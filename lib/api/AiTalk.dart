@@ -7,14 +7,14 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 
 class AiTalk {
-   final MethodChannel _listenChannel = const MethodChannel('my_app/listenChannel');
-   final MethodChannel _speakChannel = const MethodChannel('my_app/speakChannel');
-   final MethodChannel _stopChannel = const MethodChannel('my_app/stopChannel');
+  final MethodChannel _listenChannel = const MethodChannel('my_app/listenChannel');
+  final MethodChannel _speakChannel = const MethodChannel('my_app/speakChannel');
+  final MethodChannel _stopChannel = const MethodChannel('my_app/stopChannel');
 
-   bool _isListening = false;
-   bool canListen = true;
+  bool _isListening = false;
+  bool canListen = true;
 
-   Future<List<dynamic>>  callListen() async {
+  Future<List<dynamic>>  callListen() async {
     try {
       if(_isListening){
         return [];
@@ -22,6 +22,12 @@ class AiTalk {
       canListen = true;
       _isListening = true;
       String result = await _listenChannel.invokeMethod('openListening', {"arg": "my_argument"});
+      if(result.trim().isEmpty){
+        _isListening = false;
+        await callStop();
+        await callListen();
+        return [];
+      }
       DatabaseUtil.db.insert("Chat", {"content": result, "type": 0});
       // 处理成功结果
       return [{"content": result, "type": 0}, {"content": _requestOpenAi(result), "type": 0}];
@@ -31,15 +37,15 @@ class AiTalk {
     }
   }
 
-   Future<void> callStop() async {
-     try {
-        await _stopChannel.invokeMethod('stop', {"arg": "my_argument"});
-       // 处理成功结果
-        canListen = false;
-     } on PlatformException catch (e) {
-       print(e.message);
-     }
-   }
+  Future<void> callStop() async {
+    try {
+      await _stopChannel.invokeMethod('stop', {"arg": "my_argument"});
+      // 处理成功结果
+      canListen = false;
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
+  }
 
   Future<String> callSpeak(String text) async {
     try {
@@ -62,7 +68,7 @@ class AiTalk {
       final response = await http.post(
         url,
         body: json.encode({'messages':[{'role': 'user', 'content': data}],
-          'password':'bzl','key':'',
+          'password':'bzl','key':'',"model":"gpt-3.5-turbo",
           'temperature':0.6}),
         headers: {'Content-Type': 'application/json'},
       );

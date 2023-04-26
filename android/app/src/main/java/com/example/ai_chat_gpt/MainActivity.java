@@ -113,12 +113,6 @@ public class MainActivity extends FlutterActivity {
                 // 在这里添加将结果传递给语音合成引擎的代码
                 mResult.success(result);
             }
-
-            if (isLast) {
-                flag = true;
-            }
-
-
         }
 
         // 返回错误
@@ -189,6 +183,7 @@ public class MainActivity extends FlutterActivity {
         // 播放完成
         @Override
         public void onCompleted(SpeechError speechError) {
+            flag = true;
             mResult.success("播放完成");
         }
 
