@@ -1,7 +1,5 @@
-// ignore: file_names
-// ignore: file_names
-// ignore: file_names
-// ignore_for_file: use_key_in_widget_constructors
+// ignore_for_file: file_names, prefer_const_constructors,no_logic_in_create_state, use_key_in_widget_constructors, must_be_immutable
+import 'package:ai_chat_gpt/api/AiTalk.dart';
 import 'package:ai_chat_gpt/res/res_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +28,7 @@ class BottomInputViewState extends State<BottomInputView> {
 
   Function sendTextFunc;
 
-  TextEditingController _textEditingController = TextEditingController();
+  final TextEditingController _textEditingController = TextEditingController();
   List<BottomMoreGridBean> expandMenus = [
     BottomMoreGridBean("开启朗读",Icons.mic_none_outlined),
   ];
@@ -105,6 +103,9 @@ class BottomInputViewState extends State<BottomInputView> {
       ),);
   }
 
+  ///
+  /// 右侧更多菜单按钮
+  ///
   _buildShowMoreView(){
     return Row(children: [
       SizedBox(
@@ -141,9 +142,7 @@ class BottomInputViewState extends State<BottomInputView> {
       GestureDetector(
         onTap: (){
           String text = _textEditingController.text;
-          if(null!=sendTextFunc){
-            sendTextFunc(text);
-          }
+          AiTalk().requestOpenAi(text);
           _textEditingController.clear();
         },
         child: Container(
@@ -219,7 +218,7 @@ class BottomInputViewState extends State<BottomInputView> {
         return GestureDetector(
           onTap: (){
             String toastMsg = "";
-            expandMenus.forEach((element) {
+            for (var element in expandMenus) {
               if(element.name == "开启朗读"){
                 element.name = "关闭朗读";
                 element.icon = Icons.mic_off;
@@ -229,7 +228,7 @@ class BottomInputViewState extends State<BottomInputView> {
                 element.icon = Icons.mic_none_outlined;
                 toastMsg = "开启朗读成功";
               }
-            });
+            }
             setState(() {
               isShowExpand = false;
             });
@@ -251,6 +250,8 @@ class BottomInputViewState extends State<BottomInputView> {
       itemCount: expandMenus.length,
     );
   }
+
+
 }
 
 class BottomMoreGridBean{
