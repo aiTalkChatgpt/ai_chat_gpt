@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
 
+import 'package:ai_chat_gpt/common/Constants.dart';
+import 'package:ai_chat_gpt/utils/event_bus.dart';
 import 'package:flutter/material.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -28,7 +30,10 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width * width;
-    return Row(
+    return GestureDetector(
+      onTap: (){
+        EventBus.postSingle(Constants.refresh_expand_view_gone, "refresh");
+      }, child: Row(
       mainAxisAlignment:
       isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
       children: [
@@ -58,6 +63,6 @@ class ChatBubble extends StatelessWidget {
           ),
         ],
       ],
-    );
+    ),);
   }
 }

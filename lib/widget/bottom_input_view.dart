@@ -2,7 +2,9 @@
 import 'dart:async';
 
 import 'package:ai_chat_gpt/api/AiTalk.dart';
+import 'package:ai_chat_gpt/common/Constants.dart';
 import 'package:ai_chat_gpt/res/res_colors.dart';
+import 'package:ai_chat_gpt/utils/event_bus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -83,6 +85,13 @@ class BottomInputViewState extends State<BottomInputView> {
       } else {
 
       }
+    });
+
+    EventBus.observerSingle(Constants.refresh_expand_view_gone, (value){
+      setState(() {
+        isShowExpand = false;
+      });
+      commonFunc(FuncType.scrollBottom);
     });
   }
 
