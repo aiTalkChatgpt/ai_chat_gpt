@@ -16,13 +16,18 @@ class BottomInputView extends StatefulWidget {
 
   Function sendTextFunc;
   Function pressVoiceFunc;
-  Function cancelVoiceFunc;
 
-  BottomInputView({required this.sendTextFunc, required this.pressVoiceFunc, required this.cancelVoiceFunc});
+  Function startLongVoiceFunc;
+  Function cancelLongVoiceFunc;
+
+  Function commonFunc;
+
+  BottomInputView({required this.sendTextFunc, required this.pressVoiceFunc, required this.startLongVoiceFunc,
+    required this.cancelLongVoiceFunc, required this.commonFunc});
 
   @override
   State<StatefulWidget> createState() {
-    return BottomInputViewState(sendTextFunc,pressVoiceFunc, cancelVoiceFunc);
+    return BottomInputViewState(sendTextFunc,pressVoiceFunc, cancelLongVoiceFunc,startLongVoiceFunc,this.commonFunc);
   }
 }
 
@@ -34,7 +39,9 @@ class BottomInputViewState extends State<BottomInputView> {
 
   Function sendTextFunc;
   Function pressVoiceFunc;
-  Function cancelVoiceFunc;
+  Function cancelLongVoiceFunc;
+  Function startLongVoiceFunc;
+  Function commonFunc;
 
   final TextEditingController _textEditingController = TextEditingController();
   List<BottomMoreGridBean> expandMenus = [
@@ -53,7 +60,7 @@ class BottomInputViewState extends State<BottomInputView> {
   final FocusNode focusNode = FocusNode();
 
 
-  BottomInputViewState(this.sendTextFunc, this.pressVoiceFunc, this.cancelVoiceFunc);
+  BottomInputViewState(this.sendTextFunc, this.pressVoiceFunc, this.cancelLongVoiceFunc,this.startLongVoiceFunc,this.commonFunc);
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +166,6 @@ class BottomInputViewState extends State<BottomInputView> {
   ///
   _stopVoice(){
     hideVoiceView();
-    cancelVoiceFunc();
   }
 
   ///
@@ -198,9 +204,11 @@ class BottomInputViewState extends State<BottomInputView> {
       ),
       GestureDetector(
         onTap: (){
+          FocusScope.of(context).requestFocus(FocusNode());
           setState(() {
             isShowExpand = !isShowExpand;
           });
+          commonFunc(FuncType.scrollBottom);
         },
         child: Container(
         width: 40,
@@ -315,13 +323,13 @@ class BottomInputViewState extends State<BottomInputView> {
                 toastMsg = "开启陪娃成功";
                 voiceHintText = "请说话...";
                 _startVoice();
-                pressVoiceFunc();
+                startLongVoiceFunc();
               }else if(element.name == "关闭陪娃"){
                 element.name = "开启陪娃";
                 element.icon = Icons.mic_none_outlined;
                 toastMsg = "关闭陪娃成功";
                 _stopVoice();
-                cancelVoiceFunc();
+                cancelLongVoiceFunc();
               }
             }
             setState(() {
@@ -406,4 +414,8 @@ class BottomMoreGridBean{
   String name;
   IconData icon;
   BottomMoreGridBean(this.name,this.icon);
+}
+
+enum FuncType {
+  scrollBottom,
 }

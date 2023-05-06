@@ -135,15 +135,51 @@ class _MyAppState extends State<MyHomePage> with WidgetsBindingObserver {
                   }
                 },
               )),
-          BottomInputView(sendTextFunc: (text){
+          BottomInputView(
+            //发送文字
+            sendTextFunc: (text){
             AiTalk().requestOpenAi(text,false);
-            }, pressVoiceFunc: (){
-            _callListen();
-          }, cancelVoiceFunc: (){
-            _stop();
+            },
+            //发送单次语音
+            pressVoiceFunc: (){
+              aiTalk.setIsStillListening(false);
+              _callListen();
+          },
+            //开始语音长监听
+            startLongVoiceFunc: (){
+              aiTalk.setIsStillListening(true);
+              _callListen();
+            },
+            //取消语音长监听
+            cancelLongVoiceFunc: (){
+             _stop();
+          },
+            //公共回调用
+            commonFunc: (funcType){
+              switch(funcType){
+                case FuncType.scrollBottom:
+                  scrollToBottom();
+                  break;
+              }
           },),
         ],
       ),
     );
   }
+
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      setState(() {
+        if(MediaQuery.of(context).viewInsets.bottom==0){
+          /// 键盘收回
+        }else{
+          /// 键盘弹出
+          scrollToBottom();
+        }
+      });
+    });
+  }
+
 }
