@@ -13,7 +13,12 @@ class AiTalk {
   final MethodChannel _stopChannel = const MethodChannel('my_app/stopChannel');
 
   bool _isListening = false;
-  bool canListen = true;
+  bool canListen = false;
+  bool isStillListening = false;
+
+  setIsStillListening(bool isStillListening) {
+    this.isStillListening = isStillListening;
+  }
 
   Future<void> callListen() async {
     try {
@@ -25,7 +30,7 @@ class AiTalk {
       String result = await _listenChannel
           .invokeMethod('openListening', {"arg": "my_argument"});
       if (result.trim().isNotEmpty) {
-        requestOpenAi(result);
+        requestOpenAi(result, true);
         // 处理成功结果
         _isListening = false;
         callListen();
@@ -51,7 +56,7 @@ class AiTalk {
     try {
       await _speakChannel.invokeMethod('openSpeak', {"arg": text});
       _isListening = false;
-      if (!text.contains("关闭") && canListen) {
+      if (!text.contains("关闭") && canListen && isStillListening) {
         callListen();
       }
       return text;
@@ -62,7 +67,10 @@ class AiTalk {
     }
   }
 
-  Future<void> requestOpenAi(String data) async {
+  Future<void> requestOpenAi(String data, bool needAudio) async {
+    if(data.isEmpty){
+      return;
+    }
     final url = Uri.parse("https://chat-gpt-next-web5-puce.vercel.app/api/chat-stream");
     List<Map<String, dynamic>> list = await DatabaseUtil.db.queryAllRows("Chat");
     List messages = [];
@@ -95,7 +103,9 @@ class AiTalk {
         headers: {'Content-Type': 'application/json'
           ,'access-code':"stxxf.789","path":"v1/chat/completions"},
       );
-      callSpeak(response.body);
+      if(needAudio) {
+        callSpeak(response.body);
+      }
       DatabaseUtil.db.insert("Chat", {"content": response.body, "type": 1});
     } catch (error) {
       print('Error: $error');

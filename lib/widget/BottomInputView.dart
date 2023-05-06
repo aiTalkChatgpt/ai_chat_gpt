@@ -142,7 +142,7 @@ class BottomInputViewState extends State<BottomInputView> {
       GestureDetector(
         onTap: (){
           String text = _textEditingController.text;
-          AiTalk().requestOpenAi(text);
+          AiTalk().requestOpenAi(text, false);
           _textEditingController.clear();
         },
         child: Container(

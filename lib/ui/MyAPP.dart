@@ -29,19 +29,24 @@ class MyHomePage extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyHomePage> {
+class _MyAppState extends State<MyHomePage> with WidgetsBindingObserver {
   List<Map<String, dynamic>> items = [
     {'content': '你好', 'type': 1}
   ];
   late StreamSubscription<bool> _streamSubscription;
   AiTalk aiTalk = AiTalk();
+  final ScrollController scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance!.addObserver(this);
     DatabaseUtil.db.queryAllRows("chat").then((value) => {
       setState(() {
         items = value;
+        WidgetsBinding.instance!.addPostFrameCallback((_) {
+          scrollToBottom();
+        });
       })
     });
     _streamSubscription =
@@ -51,11 +56,22 @@ class _MyAppState extends State<MyHomePage> {
               DatabaseUtil.db.queryAllRows("chat").then((value) => {
                 setState(() {
                   items = value;
-                })
+                  WidgetsBinding.instance!.addPostFrameCallback((_) {
+                    scrollToBottom();
+                  });
+                }),
               });
             });
           }
         });
+  }
+
+  void scrollToBottom() {
+    scrollController.animateTo(
+      scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   void _callListen() async {
@@ -76,8 +92,11 @@ class _MyAppState extends State<MyHomePage> {
   @override
   void dispose() {
     _streamSubscription.cancel();
+    scrollController.dispose();
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +108,7 @@ class _MyAppState extends State<MyHomePage> {
         children: [
           Expanded(
               child: ListView.builder(
+                controller: scrollController,
                 itemCount: items.length,
                 itemBuilder: (BuildContext context, int index) {
                   final item = items[index];
