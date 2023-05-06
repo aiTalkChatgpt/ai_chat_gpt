@@ -1,7 +1,6 @@
 // ignore_for_file: file_names
 
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:ai_chat_gpt/utils/data_util.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
@@ -68,7 +67,7 @@ class AiTalk {
     List<Map<String, dynamic>> list = await DatabaseUtil.db.queryAllRows("Chat");
     List messages = [];
     if(list.length > 10) {
-      list = list.sublist(0, 10);
+      list = list.sublist(list.length - 10, list.length);
     }
     if(list.isNotEmpty){
       for (var element in list) {
