@@ -25,7 +25,7 @@ class AiTalk {
       String result = await _listenChannel
           .invokeMethod('openListening', {"arg": "my_argument"});
       if (result.trim().isNotEmpty) {
-        _requestOpenAi(result);
+        requestOpenAi(result);
         // 处理成功结果
         _isListening = false;
         callListen();
@@ -62,7 +62,7 @@ class AiTalk {
     }
   }
 
-  Future<void> _requestOpenAi(String data) async {
+  Future<void> requestOpenAi(String data) async {
     final url = Uri.parse("https://chat-gpt-next-web5-puce.vercel.app/api/chat-stream");
     List<Map<String, dynamic>> list = await DatabaseUtil.db.queryAllRows("Chat");
     List messages = [];

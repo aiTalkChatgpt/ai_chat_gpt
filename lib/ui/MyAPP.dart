@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:ai_chat_gpt/api/AiTalk.dart';
 import 'package:ai_chat_gpt/ui/ChatBubble.dart';
 import 'package:ai_chat_gpt/utils/data_util.dart';
+import 'package:ai_chat_gpt/widget/BottomInputView.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -114,6 +115,9 @@ class _MyAppState extends State<MyHomePage> {
                   }
                 },
               )),
+          BottomInputView((){
+
+          }),
           Container(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
