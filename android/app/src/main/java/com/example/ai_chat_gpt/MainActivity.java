@@ -185,7 +185,6 @@ public class MainActivity extends FlutterActivity {
         @Override
         public void onCompleted(SpeechError speechError) {
             flag = true;
-            mResult.success("播放完成");
         }
 
         @Override
