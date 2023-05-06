@@ -1,9 +1,13 @@
 // ignore_for_file: file_names, prefer_const_constructors,no_logic_in_create_state, use_key_in_widget_constructors, must_be_immutable
+import 'dart:async';
+
 import 'package:ai_chat_gpt/api/AiTalk.dart';
 import 'package:ai_chat_gpt/res/res_colors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import 'custom_overlay.dart';
 
 ///
 /// 底部输入交互栏
@@ -11,30 +15,45 @@ import 'package:fluttertoast/fluttertoast.dart';
 class BottomInputView extends StatefulWidget {
 
   Function sendTextFunc;
+  Function pressVoiceFunc;
+  Function cancelVoiceFunc;
 
-  BottomInputView(this.sendTextFunc);
+  BottomInputView({required this.sendTextFunc, required this.pressVoiceFunc, required this.cancelVoiceFunc});
 
   @override
   State<StatefulWidget> createState() {
-    return BottomInputViewState(sendTextFunc);
+    return BottomInputViewState(sendTextFunc,pressVoiceFunc, cancelVoiceFunc);
   }
 }
 
 class BottomInputViewState extends State<BottomInputView> {
 
-  bool isShowExpand = false;
-  bool isShowInput = true;
-  bool isShowSendBtn = false;
+  bool isShowExpand = false;//显示扩展工具
+  bool isShowInput = true;//显示输入框
+  bool isShowSendBtn = false;//显示发送那妞
 
   Function sendTextFunc;
+  Function pressVoiceFunc;
+  Function cancelVoiceFunc;
 
   final TextEditingController _textEditingController = TextEditingController();
   List<BottomMoreGridBean> expandMenus = [
-    BottomMoreGridBean("开启朗读",Icons.mic_none_outlined),
+    BottomMoreGridBean("开启陪娃",Icons.mic_none_outlined),
   ];
 
+  ///语音输入动画
+  Timer? _timer;
+  int _count = 0;
+  OverlayEntry? overlayEntry;
+  String voiceIco = "images/voice_volume_1.png";
 
-  BottomInputViewState(this.sendTextFunc);
+  String voiceHintText = "松开手指发送";
+
+
+  final FocusNode focusNode = FocusNode();
+
+
+  BottomInputViewState(this.sendTextFunc, this.pressVoiceFunc, this.cancelVoiceFunc);
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +63,20 @@ class BottomInputViewState extends State<BottomInputView> {
         _buildExpandView()
       ],
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    focusNode.addListener(() {
+      if (focusNode.hasFocus) {
+        setState(() {
+          isShowExpand = false;
+        });
+      } else {
+
+      }
+    });
   }
 
   ///
@@ -59,21 +92,7 @@ class BottomInputViewState extends State<BottomInputView> {
           SizedBox(
             width: 10,
           ),
-          Expanded(
-            child: Container(
-              alignment: isShowInput ? null :Alignment.center,
-              height: 40,
-              padding: EdgeInsets.only(left: 10, right: 10),
-              decoration: BoxDecoration(
-                color: ResColors.material_grey_900,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: isShowInput ?  _buildTextFieldView() : Text("按住 说话", style: TextStyle(
-                color: ResColors.material_grey_500,
-                fontSize: 16
-              ),
-            )),
-          ),
+          _buildInputAndPressVoiceView(),
           _buildShowMoreView(),
           _buildSendBtnView()
         ],
@@ -81,12 +100,78 @@ class BottomInputViewState extends State<BottomInputView> {
     );
   }
 
+  ///
+  /// 长按语音和文字数据框
+  ///
+  _buildInputAndPressVoiceView(){
+    return Expanded(
+      child: GestureDetector(
+        onLongPressStart: (details) {
+          if(isShowInput)return;
+          voiceHintText = "松开手指发送";
+          _startVoice();
+          pressVoiceFunc();
+        },
+        onLongPressEnd: (details) {
+          if(isShowInput)return;
+          _stopVoice();
+        },
+        child: Container(
+          alignment: isShowInput ? null :Alignment.center,
+          height: 40,
+          padding: EdgeInsets.only(left: 10, right: 10),
+          decoration: BoxDecoration(
+            color: ResColors.material_grey_900,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: isShowInput ?  _buildTextFieldView() : Text("按住 说话", style: TextStyle(
+              color: ResColors.material_grey_500,
+              fontSize: 16
+          ),
+          )),),
+    );
+  }
+
+  ///
+  /// 开始语音
+  ///
+  _startVoice(){
+    _timer = Timer.periodic(Duration(milliseconds: 100), (t) {
+      _count++;
+      if(_count>=7){
+        _count = 1;
+      }
+      setState(() {
+        if(voiceHintText == "松开手指发送"){
+          isShowExpand = false;
+        }
+        voiceIco = "images/voice_volume_$_count.png";
+        if (overlayEntry != null) {
+          overlayEntry!.markNeedsBuild();
+        }
+      });
+    });
+    showVoiceView();
+  }
+
+  ///
+  /// 停止语音
+  ///
+  _stopVoice(){
+    hideVoiceView();
+    cancelVoiceFunc();
+  }
+
+  ///
+  /// 左侧-语音和文字切换图标
+  ///
   _buildVoiceAndInputIcon(){
     return  GestureDetector(
       onTap: () {
         setState(() {
           isShowInput = !isShowInput;
           isShowExpand = false;
+          isShowSendBtn = false;
         });
       },
       child: Container(
@@ -142,8 +227,11 @@ class BottomInputViewState extends State<BottomInputView> {
       GestureDetector(
         onTap: (){
           String text = _textEditingController.text;
-          AiTalk().requestOpenAi(text, false);
           _textEditingController.clear();
+          sendTextFunc(text);
+          setState(() {
+            isShowSendBtn = false;
+          });
         },
         child: Container(
         width: 60,
@@ -170,13 +258,15 @@ class BottomInputViewState extends State<BottomInputView> {
         fontSize: 16,
         color: ResColors.material_grey_500,
       ),
+      focusNode: focusNode,
       decoration: InputDecoration(
         hintText: "请输入内容",
         hintStyle: TextStyle(
           fontSize: 14,
           color: ResColors.material_grey_500,
         ),
-        border: InputBorder.none,
+        border: OutlineInputBorder(borderSide: BorderSide.none),
+        contentPadding: EdgeInsets.all(0),
       ),
       onChanged: (value) {
          setState(() {
@@ -211,7 +301,7 @@ class BottomInputViewState extends State<BottomInputView> {
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         mainAxisSpacing: 15,
-        crossAxisSpacing: 40,
+        crossAxisSpacing: 30,
       ),
       itemBuilder: (context, index) {
         BottomMoreGridBean bean = expandMenus[index];
@@ -219,14 +309,19 @@ class BottomInputViewState extends State<BottomInputView> {
           onTap: (){
             String toastMsg = "";
             for (var element in expandMenus) {
-              if(element.name == "开启朗读"){
-                element.name = "关闭朗读";
+              if(element.name == "开启陪娃"){
+                element.name = "关闭陪娃";
                 element.icon = Icons.mic_off;
-                toastMsg = "关闭朗读成功";
-              }else if(element.name == "关闭朗读"){
-                element.name = "开启朗读";
+                toastMsg = "开启陪娃成功";
+                voiceHintText = "请说话...";
+                _startVoice();
+                pressVoiceFunc();
+              }else if(element.name == "关闭陪娃"){
+                element.name = "开启陪娃";
                 element.icon = Icons.mic_none_outlined;
-                toastMsg = "开启朗读成功";
+                toastMsg = "关闭陪娃成功";
+                _stopVoice();
+                cancelVoiceFunc();
               }
             }
             setState(() {
@@ -235,6 +330,7 @@ class BottomInputViewState extends State<BottomInputView> {
             Fluttertoast.showToast(msg:toastMsg);
           },
           child: Container(
+            padding: EdgeInsets.only(left: 3,right: 3,bottom: 3,top: 2),
           decoration: BoxDecoration(
             color: ResColors.material_grey_900,
             borderRadius: BorderRadius.circular(10),
@@ -251,7 +347,59 @@ class BottomInputViewState extends State<BottomInputView> {
     );
   }
 
+  ///
+  ///显示录音悬浮布局
+  ///
+  buildOverLayView(BuildContext context) {
+    if (overlayEntry == null) {
+      overlayEntry = OverlayEntry(builder: (content) {
+        return CustomOverlay(
+          icon: Column(
+            children: <Widget>[
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: Image.asset(
+                  "assets/"+voiceIco,
+                  width: 100,
+                  height: 100,
+                ),
+              ),
+              Text(
+                voiceHintText,
+                style: TextStyle(
+                  fontStyle: FontStyle.normal,
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+              )
+            ],
+          ),
+        );
+      });
+      Overlay.of(context)!.insert(overlayEntry!);
+    }
+  }
 
+  ///
+  /// 显示语音动画
+  ///
+  showVoiceView() {
+    buildOverLayView(context);
+  }
+
+  ///
+  /// 隐藏语音动画
+  ///
+  hideVoiceView() {
+    if (_timer!.isActive) {
+      _timer?.cancel();
+      _count = 0;
+    }
+    if (overlayEntry != null) {
+      overlayEntry?.remove();
+      overlayEntry = null;
+    }
+  }
 }
 
 class BottomMoreGridBean{
