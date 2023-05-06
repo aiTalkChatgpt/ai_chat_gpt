@@ -6,7 +6,7 @@ import 'dart:async';
 import 'package:ai_chat_gpt/api/AiTalk.dart';
 import 'package:ai_chat_gpt/ui/ChatBubble.dart';
 import 'package:ai_chat_gpt/utils/data_util.dart';
-import 'package:ai_chat_gpt/widget/BottomInputView.dart';
+import 'package:ai_chat_gpt/widget/bottom_input_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -135,26 +135,13 @@ class _MyAppState extends State<MyHomePage> with WidgetsBindingObserver {
                   }
                 },
               )),
-          BottomInputView((){
-
-          }),
-          Container(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FloatingActionButton(
-                  child: const Icon(Icons.mic),
-                  onPressed: _callListen,
-                ),
-                const SizedBox(width: 16),
-                FloatingActionButton(
-                  child: const Icon(Icons.stop),
-                  onPressed: _stop,
-                ),
-              ],
-            ),
-            height: 60,
-          )
+          BottomInputView(sendTextFunc: (text){
+            AiTalk().requestOpenAi(text,false);
+            }, pressVoiceFunc: (){
+            _callListen();
+          }, cancelVoiceFunc: (){
+            _stop();
+          },),
         ],
       ),
     );
