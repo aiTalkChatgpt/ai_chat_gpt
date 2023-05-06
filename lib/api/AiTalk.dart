@@ -71,7 +71,7 @@ class AiTalk {
     if(data.isEmpty){
       return;
     }
-    final url = Uri.parse("https://chat-gpt-next-web5-puce.vercel.app/api/chat-stream");
+    final url = Uri.parse("https://www.pengmaster.com/api/chat-stream");
     List<Map<String, dynamic>> list = await DatabaseUtil.db.queryAllRows("Chat");
     List messages = [];
     if(list.length > 10) {
